@@ -33,11 +33,11 @@ export const riderInformation = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const gst = generateTax(totalFare);
-    const discount = generateDiscount(totalFare);
-    const platFormFess = generatePlatFormFess(totalFare);
-    const otherFess = generateOtherFess(totalFare);
-    const finalFare = generateTotalFare(totalFare);
+    const gst = generateTax(Number(totalFare));
+    const discount = generateDiscount(Number(totalFare));
+    const platFormFess = generatePlatFormFess(Number(totalFare));
+    const otherFess = generateOtherFess(Number(totalFare));
+    const finalFare = generateTotalFare(Number(totalFare));
 
     const rideInfo = await rideInfoModel.create({
       pickup: to,
