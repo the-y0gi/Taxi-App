@@ -68,3 +68,58 @@ const otp = latestRide?.otp || "0000";
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+export const optVerify = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required." });
+  }
+
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const ride = await rideInfoModel
+      .findOne({ user: user._id, otp })
+      .sort({ createdAt: -1 })
+      .select("+otp");
+
+    if (!ride) {
+      return res.status(404).json({ message: "Invalid OTP or Ride not found." });
+    }
+
+    const rideData = {
+      pickup: ride.pickup,
+      destination: ride.destination,
+      trip: ride.trip,
+      carType: ride.carType,
+      rate: ride.rate,
+      gst: ride.gst,
+      discount: ride.discount,
+      platFormFess: ride.platFormFess,
+      otherFess: ride.otherFess,
+      totalFare: ride.totalFare,
+      distance: ride.distance,
+      tripDate: ride.date,
+    };
+
+    res.status(200).json({
+      message: "OTP verified successfully.",
+      user: {
+        username: user.username,
+        email: user.email,
+        _id: user._id,
+      },
+      ride: rideData,
+    });
+
+  } catch (err) {
+    console.error("❌ OTP Verification Error:", err);
+    res.status(500).json({ message: "Server error during OTP verification." });
+  }
+};
