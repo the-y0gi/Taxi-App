@@ -29,32 +29,32 @@ const rideSchema = new mongoose.Schema({
         required: true,
     },
     gst: {
-        type: String,
+        type: Number,
         required: true,
     },
     platFormFess: {
-        type: String,
+        type: Number,
         required: true,
     },
     otherFess:{
-        type: String,
+        type: Number,
         required: true,
     },
      discount: {
-        type: String,
+        type: Number,
         required: true,
     },
       totalFare: {
-        type: String,
+        type: Number,
         required: true,
     },
 
     distance: {
-        type: String,
+        type: Number,
         required: true
     }, 
     otp: {
-        type: String,
+        type: Number,
         select: false,
         required: true,
     },
