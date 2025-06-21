@@ -1,8 +1,7 @@
 import rideInfoModel from "../models/rideInfo.model.js";
 
 export const riderInformation = async (req, res) => {
-  const { to, from, trip, carName, rate, totalFare, distance, tripDate } =
-    req.body;
+  const { to, from, trip, carName, rate, totalFare, distance, tripDate } = req.body;
 
   const generateTax = (value) => Math.round(value * 0.18);
   const generatePlatFormFess = (value) => Math.round(value * 0.02);
@@ -17,19 +16,8 @@ export const riderInformation = async (req, res) => {
     return Math.round(value + tax + platform + other - discount);
   };
 
-  const otpGenerate = () => Math.floor(1000 + Math.random() * 9000);
-
   try {
-    if (
-      !to ||
-      !from ||
-      !trip ||
-      !carName ||
-      !distance ||
-      !rate ||
-      !totalFare ||
-      !tripDate
-    ) {
+    if (!to || !from || !trip || !carName || !distance || !rate || !totalFare || !tripDate) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
@@ -52,10 +40,9 @@ export const riderInformation = async (req, res) => {
       totalFare: finalFare,
       distance,
       date: tripDate,
-      otp: otpGenerate(),
+
     });
 
-    
     res.status(201).json({
       gst,
       discount,

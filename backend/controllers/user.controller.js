@@ -22,26 +22,25 @@ export const userLogin = async (req, res) => {
       });
     }
 
-const latestRide = await rideInfoModel
-  .findOne({})
-  .sort({ createdAt: -1 })
-  .select("+otp");
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-  
-if (latestRide) {
-  await rideInfoModel.findByIdAndUpdate(latestRide._id, {
-    user: user._id,
-  });
-}
+    const latestRide = await rideInfoModel
+      .findOne({ user: { $exists: false } }) 
+      .sort({ createdAt: -1 })
+      .select("+otp");
 
-const otp = latestRide?.otp || "0000";
-
+    if (latestRide) {
+      await rideInfoModel.findByIdAndUpdate(latestRide._id, {
+        user: user._id,
+        otp,
+      });
+    }
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS
+        pass: process.env.MAIL_PASS,
       },
     });
 
@@ -62,13 +61,11 @@ const otp = latestRide?.otp || "0000";
         email: user.email,
       },
     });
-
   } catch (err) {
     console.error("❌ Login Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 export const optVerify = async (req, res) => {
@@ -86,7 +83,7 @@ export const optVerify = async (req, res) => {
 
     const ride = await rideInfoModel
       .findOne({ user: user._id, otp })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 }) 
       .select("+otp");
 
     if (!ride) {
@@ -117,7 +114,6 @@ export const optVerify = async (req, res) => {
       },
       ride: rideData,
     });
-
   } catch (err) {
     console.error("❌ OTP Verification Error:", err);
     res.status(500).json({ message: "Server error during OTP verification." });
