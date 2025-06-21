@@ -24,17 +24,20 @@ export const userLogin = async (req, res) => {
 
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const latestRide = await rideInfoModel
-      .findOne({ user: { $exists: false } }) 
-      .sort({ createdAt: -1 })
-      .select("+otp");
 
-    if (latestRide) {
-      await rideInfoModel.findByIdAndUpdate(latestRide._id, {
-        user: user._id,
-        otp,
-      });
+    const latestRide = await rideInfoModel
+      .findOne({ user: null, otp: { $exists: false } })
+      .sort({ createdAt: -1 });
+
+    if (!latestRide) {
+      return res.status(404).json({ message: "No unassigned ride found to attach OTP." });
     }
+
+    await rideInfoModel.findByIdAndUpdate(latestRide._id, {
+      user: user._id,
+      otp: otp,
+    });
+
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -54,7 +57,7 @@ export const userLogin = async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({
-      message: "User logged in & email sent successfully",
+      message: "User logged in & OTP sent successfully",
       user: {
         _id: user._id,
         username: user.username,
@@ -66,6 +69,7 @@ export const userLogin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 export const optVerify = async (req, res) => {
@@ -83,7 +87,7 @@ export const optVerify = async (req, res) => {
 
     const ride = await rideInfoModel
       .findOne({ user: user._id, otp })
-      .sort({ createdAt: -1 }) 
+      .sort({ createdAt: -1 })
       .select("+otp");
 
     if (!ride) {
@@ -105,8 +109,56 @@ export const optVerify = async (req, res) => {
       tripDate: ride.date,
     };
 
+    // Format date
+    const formattedDate = new Date(ride.date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    // Send confirmation email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.MAIL_USER,
+      to: user.email,
+      subject: "🎉 Ride Confirmed - Details Inside",
+      text: `
+Hello ${user.username},
+
+✅ Your OTP has been verified successfully. Here's your ride summary:
+
+🛣️ Route: ${ride.pickup} → ${ride.destination}
+🚘 Car Type: ${ride.carType}
+📅 Date: ${formattedDate}
+🛫 Trip Type: ${ride.trip}
+📏 Distance: ${ride.distance} km
+
+💸 Fare Breakdown:
+- Base Rate: ₹${ride.rate}
+- GST (18%): ₹${ride.gst}
+- Platform Fee (2%): ₹${ride.platFormFess}
+- Other Charges (20%): ₹${ride.otherFess}
+- Discount (5%): -₹${ride.discount}
+- ----------------------------
+💰 Total Fare: ₹${ride.totalFare}
+
+Thank you for booking with Taxi App!
+—
+Team Taxi App
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
     res.status(200).json({
-      message: "OTP verified successfully.",
+      message: "OTP verified and ride details emailed successfully.",
       user: {
         username: user.username,
         email: user.email,
