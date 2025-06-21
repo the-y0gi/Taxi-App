@@ -46,15 +46,20 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  passenger:{
-    type:Number,
-    required:true
+  passenger: {
+    type: Number,
+    required: true,
   },
   otp: {
     type: String,
-    select: false,
+    select: true,
     required: false,
   },
+  otpExpires: {
+    type: Date,
+    required: false,
+  },
+
   date: {
     type: Date,
     required: true,
@@ -70,10 +75,13 @@ const rideSchema = new mongoose.Schema({
     lowercase: true,
     minlength: [5, "Email must be at least 5 characters long"],
   },
-  mobile:{
-    type:Number,
-    required: true
-  }
+  mobile: {
+    type: Number,
+    required: true,
+  },
+  uniqueCode: {
+    type: String,
+  },
 });
 
 export default mongoose.model("ride", rideSchema);

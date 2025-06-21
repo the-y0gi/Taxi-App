@@ -31,7 +31,7 @@ export const optVerify = async (req, res) => {
 
     // Generate and assign new unique code
     const uniqueCode = generateUniqueCode();
-    ride.otp = uniqueCode;
+    ride.uniqueCode = uniqueCode;
     await ride.save();
 
     // Format date

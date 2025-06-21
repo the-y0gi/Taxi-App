@@ -1,5 +1,3 @@
-
-
 import rideInfoModel from "../models/rideInfo.model.js";
 import nodemailer from "nodemailer";
 
@@ -45,7 +43,9 @@ export const riderInformation = async (req, res) => {
     const otherFess = generateOtherFess(Number(totalFare));
     const finalFare = generateTotalFare(Number(totalFare));
     const distanceValue = Math.round(distance);
+
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
 
     const rideInfo = await rideInfoModel.create({
       pickup: to,
@@ -64,10 +64,11 @@ export const riderInformation = async (req, res) => {
       username,
       email,
       mobile: number,
-      otp
+      otp,
+      otpExpires
     });
 
-    // 📧 Send OTP to user's email
+    // 📧 Send OTP to email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -80,7 +81,7 @@ export const riderInformation = async (req, res) => {
       from: process.env.MAIL_USER,
       to: email,
       subject: "Taxi App Ride OTP",
-      text: `Hello ${username},\n\nYour OTP for the ride confirmation is: ${otp}\n\nThanks,\nTaxi App`,
+      text: `Hello ${username},\n\nYour OTP for the ride confirmation is: ${otp}. It will expire in 5 minutes.\n\nThanks,\nTaxi App`,
     };
 
     await transporter.sendMail(mailOptions);
