@@ -1,11 +1,6 @@
 import mongoose from "mongoose";
 
 const rideSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user",
-    required: false,
-  },
   pickup: {
     type: String,
     required: true,
@@ -51,8 +46,12 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  passenger:{
+    type:Number,
+    required:true
+  },
   otp: {
-    type: Number,
+    type: String,
     select: false,
     required: false,
   },
@@ -60,6 +59,21 @@ const rideSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  username: {
+    type: String,
+    required: true,
+    minlength: [3, "First name must be at least 3 characters long"],
+  },
+  email: {
+    type: String,
+    required: true,
+    lowercase: true,
+    minlength: [5, "Email must be at least 5 characters long"],
+  },
+  mobile:{
+    type:Number,
+    required: true
+  }
 });
 
 export default mongoose.model("ride", rideSchema);
