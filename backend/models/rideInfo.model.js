@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const rideSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   pickup: {
     type: String,
     required: true,
@@ -12,34 +17,10 @@ const rideSchema = new mongoose.Schema({
   trip: {
     type: String,
     enum: ["one-way", "two-way"],
-    default: "oneWay",
+    default: "one-way",
   },
   carType: {
     type: String,
-    required: true,
-  },
-  rate: {
-    type: Number,
-    required: true,
-  },
-  gst: {
-    type: Number,
-    required: true,
-  },
-  platFormFess: {
-    type: Number,
-    required: true,
-  },
-  otherFess: {
-    type: Number,
-    required: true,
-  },
-  discount: {
-    type: Number,
-    required: true,
-  },
-  totalFare: {
-    type: Number,
     required: true,
   },
   distance: {
@@ -50,38 +31,25 @@ const rideSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  otp: {
-    type: String,
-    select: true,
-    required: false,
-  },
-  otpExpires: {
-    type: Date,
-    required: false,
-  },
-
   date: {
     type: Date,
     required: true,
   },
-  username: {
-    type: String,
-    required: true,
-    minlength: [3, "First name must be at least 3 characters long"],
-  },
-  email: {
-    type: String,
-    required: true,
-    lowercase: true,
-    minlength: [5, "Email must be at least 5 characters long"],
-  },
-  mobile: {
+  otp: {
     type: Number,
-    required: true,
+    select: true,
+  },
+  otpExpires: {
+    type: Date,
   },
   uniqueCode: {
     type: String,
+    unique: true,
+  },
+  payment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Payment",
   },
 });
 
-export default mongoose.model("ride", rideSchema);
+export default mongoose.model("Ride", rideSchema);

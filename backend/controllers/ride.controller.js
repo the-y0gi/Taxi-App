@@ -1,5 +1,8 @@
-import rideInfoModel from "../models/rideInfo.model.js";
+import rideModel from "../models/rideInfo.model.js";
+import userModel from "../models/user.model.js";
+import paymentModel from "../models/payment.model.js";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 export const riderInformation = async (req, res) => {
   const {
@@ -14,17 +17,39 @@ export const riderInformation = async (req, res) => {
     totalFare,
     distance,
     tripDate,
-    passenger
+    passenger,
   } = req.body;
 
   if (
-    !username || !email || !number || !to || !from || !trip || !carName ||
-    !distance || !rate || !totalFare || !tripDate || !passenger
+    !username ||
+    !email ||
+    !number ||
+    !to ||
+    !from ||
+    !trip ||
+    !carName ||
+    !distance ||
+    !rate ||
+    !totalFare ||
+    !tripDate ||
+    !passenger
   ) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
   try {
+
+    // user create or find...
+    let user = await userModel.findOne({ email });
+    if (!user) {
+      user = await userModel.create({
+        username,
+        email,
+        mobile: number,
+      });
+    }
+
+    // fare breakdown...
     const generateTax = (value) => Math.round(value * 0.18);
     const generatePlatFormFess = (value) => Math.round(value * 0.02);
     const generateDiscount = (value) => Math.round(value * 0.05);
@@ -44,31 +69,40 @@ export const riderInformation = async (req, res) => {
     const finalFare = generateTotalFare(Number(totalFare));
     const distanceValue = Math.round(distance);
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
 
-    const rideInfo = await rideInfoModel.create({
+    // OTP Generate & expiry...
+    const otp = crypto.randomInt(100000, 999999);
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+
+    //save to ride information into database...
+    const ride = await rideModel.create({
+      user: user._id,
       pickup: to,
       destination: from,
       trip,
       carType: carName,
-      rate,
-      gst,
-      discount,
-      platFormFess,
-      otherFess,
-      totalFare: finalFare,
       distance: distanceValue,
       passenger,
       date: tripDate,
-      username,
-      email,
-      mobile: number,
       otp,
-      otpExpires
+      otpExpires,
     });
 
-    // 📧 Send OTP to email
+     //save to payment information into database...
+    const payment = await paymentModel.create({
+      ride: ride._id, 
+      rate,
+      gst,
+      discount,
+      platformFees: platFormFess,
+      otherFees: otherFess,
+      totalFare: finalFare,
+    });
+
+    ride.payment = payment._id;
+    await ride.save();
+
+    // Send OTP in the user email...
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -87,12 +121,11 @@ export const riderInformation = async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     res.status(201).json({
-      message: "Ride created and OTP sent to email successfully.",
-      rideId: rideInfo._id
+      message: "Ride created and OTP sent successfully.",
+      rideId: ride._id,
     });
-
   } catch (err) {
-    console.error("❌ Ride creation error:", err);
+    console.error("Ride creation error:", err);
     res.status(500).json({ message: "Server error during ride creation." });
   }
 };
